@@ -16,3 +16,11 @@ target/classes/META-INF/MANIFEST\.MF
 target/classes/META-INF/maven/com\.anu/spring-integration/pom\.properties
 
 target/classes/META-INF/maven/com\.anu/spring-integration/pom\.xml
+
+target/classes/com/anu/springintegration/MethodConverter\.class
+
+target/classes/com/anu/springintegration/Sender\.class
+
+target/classes/com/anu/springintegration/SpringIntegrationApplication\.class
+
+target/test-classes/com/anu/springintegration/SpringIntegrationApplicationTests\.class
