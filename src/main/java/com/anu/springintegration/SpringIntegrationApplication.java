@@ -10,6 +10,7 @@ import org.springframework.integration.annotation.Router;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.router.ExpressionEvaluatingRouter;
+import org.springframework.integration.router.PayloadTypeRouter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
@@ -30,8 +31,13 @@ public class SpringIntegrationApplication {
 			String msgsend = scanner.next();
 			Account ac = new Account();
 			ac.setAccountNo("123456");
-			ac.setAccountType(msgsend);
-			sender.send(ac);
+			ac.setAccountType("saving");
+			if(msgsend.equalsIgnoreCase("saving")) {
+				sender.send(ac);
+			}else {
+				sender.send("hello");
+			}
+			
 		}
 		scanner.close();
 	}
@@ -43,21 +49,11 @@ public class SpringIntegrationApplication {
 	
 	@Router(inputChannel="messagechannel")
 	@Bean
-	public ExpressionEvaluatingRouter router() {
-		ExpressionEvaluatingRouter evr = new ExpressionEvaluatingRouter("payload.accountType") ;
-		evr.setChannelResolver(name->name.equalsIgnoreCase("saving")?savingChannel():defaultOutChannel());
-		/*
-		evr.setChannelResolver(new DestinationResolver<MessageChannel>() {
-
-			@Override
-			public MessageChannel resolveDestination(String name) throws DestinationResolutionException {
-				return null;
-			}
-			
-		});
-		*/
-		return evr;
-		
+	public PayloadTypeRouter router() {
+		PayloadTypeRouter payloadrout = new PayloadTypeRouter();
+		payloadrout.setChannelMapping(Account.class.getName(), "savingChannel");
+		payloadrout.setDefaultOutputChannel(defaultOutChannel());
+		return payloadrout;
 	}
 	
 	@Bean

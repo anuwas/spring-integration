@@ -4,5 +4,5 @@ import org.springframework.integration.annotation.MessagingGateway;
 
 @MessagingGateway(defaultRequestChannel="messagechannel")
 public interface Sender {
-	public void send(Account msg);
+	public void send(Object msg);
 }
