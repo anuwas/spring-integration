@@ -1,20 +1,21 @@
 package com.anu.springintegration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.integration.annotation.Router;
 import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.integration.annotation.Splitter;
 import org.springframework.integration.channel.DirectChannel;
-import org.springframework.integration.router.ExpressionEvaluatingRouter;
+import org.springframework.integration.splitter.AbstractMessageSplitter;
+import org.springframework.integration.splitter.MethodInvokingSplitter;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.core.DestinationResolutionException;
-import org.springframework.messaging.core.DestinationResolver;
 
 
 
@@ -31,6 +32,16 @@ public class SpringIntegrationApplication {
 			Account ac = new Account();
 			ac.setAccountNo("123456");
 			ac.setAccountType(msgsend);
+			AccountHolder ach = new AccountHolder();
+			ach.setName("anu");
+			ach.setAddress("USA");
+			AccountHolder ach2 = new AccountHolder();
+			ach2.setName("was");
+			ach2.setAddress("india");
+			List<AccountHolder> achList = new ArrayList<>();
+			achList.add(ach);
+			achList.add(ach2);
+			ac.setAccountHolder(achList);
 			sender.send(ac);
 		}
 		scanner.close();
@@ -41,46 +52,32 @@ public class SpringIntegrationApplication {
 		return new DirectChannel();
 	}
 	
-	@Router(inputChannel="messagechannel")
+	@Splitter(inputChannel="messagechannel")
 	@Bean
-	public ExpressionEvaluatingRouter router() {
-		ExpressionEvaluatingRouter evr = new ExpressionEvaluatingRouter("payload.accountType") ;
-		evr.setChannelResolver(name->name.equalsIgnoreCase("saving")?savingChannel():defaultOutChannel());
-		/*
-		evr.setChannelResolver(new DestinationResolver<MessageChannel>() {
-
-			@Override
-			public MessageChannel resolveDestination(String name) throws DestinationResolutionException {
-				return null;
-			}
-			
-		});
-		*/
-		return evr;
+	public AbstractMessageSplitter messageSpilitter() {
+		MethodInvokingSplitter misp = new MethodInvokingSplitter(messageModifier(),"callbySplitter");
+		misp.setOutputChannel(outputChannel());
+		return misp;
 		
 	}
 	
 	@Bean
-	public MessageChannel savingChannel() {
-		return new DirectChannel();
+	public MessageModifier messageModifier() {
+		return new MessageModifier();
 	}
 	
 	@Bean
-	public MessageChannel defaultOutChannel() {
+	public MessageChannel outputChannel() {
 		return new DirectChannel();
 	}
 	//any customization needs to do inside the service activator
 	@Bean
-	@ServiceActivator(inputChannel="savingChannel")
+	@ServiceActivator(inputChannel="outputChannel")
 	public MessageHandler savingChannelHandler() {
-		return  (Message<?> message)->System.out.print("Saving Channel "+message);
+		return  (Message<?> message)->System.out.println("Message after splitter "+message);
 	}
 	
-	@Bean
-	@ServiceActivator(inputChannel="defaultOutChannel")
-	public MessageHandler defaultChannelHandler() {
-		return  message->System.out.print("Default Channel "+message);
-	}
+
 
 }
 
